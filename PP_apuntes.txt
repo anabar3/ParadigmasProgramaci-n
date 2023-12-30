@@ -1,0 +1,635 @@
+PP
+
+RECURSIVIDAD------------------------------------------------------------
+
+Recursividad final/terminal - recursividad en la que la última operacion que se ejecuta es la función recursiva
+Recursividad no final/no terminal - contrario, anotar cuentas pendientes (costoso). Puede haber stack overflow
+
+EJEMPLO
+let rec quo x y =
+    if x < y then x
+    else 1+quo (x-y) y;;
+
+let rec rem x y =
+    if x<y then x
+    else rem (x-y) y;;
+
+let rec div x y =
+    if x < y then (0, x)
+    else let (q,r) = div (x-y) y in
+         (1+q, r);;
+
+FIBONACCI------------------------------------------------------------
+
+let rec fib n = 
+    if n<= 1 then n
+    else fib (n-1) + fib (n-2);;
+
+let rec fib2 = function
+    1 ->(1,0)
+   | n -> let f1, f2 = fib2 (n-1) in
+             (f1+f2, f1) ;;
+let fib n = fst (fib2 n);;
+
+
+Sys.time ();; - obtiene el tiempo que lleva de cpu lleva consumido
+
+let crono f x =
+    let t = Sys.time () in
+    let _= f x in 
+    Sys.time () -. t;;
+
+let fib' n =
+   let rec aux (i, f, a) =
+       if i=n then f
+       else aux (i+1, f+a, f)
+   in aux (0 , 0, 1);;
+
+Forma Curry
+Producto cartesiano
+
+LISTAS ------------------------------------------------------------
+
+Si existe un tipo de dato llamado t, existe un t list. List.hd  (valor del primer elemento de la lista) ; List.tl (todos los valores menos la cabeza de la lista)
+[1;2;3]
+int list = [1;2;3]
+
+recursiva no terminal
+let rec length l =
+    if l = [ ] then 0
+    else 1+length (List.tl l) ;;
+
+recursiva terminal
+let length ll =
+   let rec aux (l, i) =
+       if l = [ ] then i
+       else aux (List.tl l, i+1)
+   in aux (ll, 0) ;;
+
+let rec last l =
+   if length l = l then List.hd l
+   else last (List. tl l);;
+
+Lista que tiene como cabeza h y como tail t  -> <h>  : : <t>
+2 :: 3 :: 1 :: [] ;;
+int list = [2;3;1]
+
+let hd (h :: _) = h ;;
+
+let rec length = function
+   [ ] -> 0
+  | _ :: t ->1 + length t;;
+
+let rec last = function
+   h :: [ ]
+  | _ :: t -> last t;;
+
+
+FRASES MATCH WITH ------------------------------------------------------------
+
+match <e> with
+    <p1> -> <e1>
+   | .
+     .
+     .
+  | <pn> -> <en>
+
+lo cual sería lo mismo que poner
+(function <p1> -> <e1> | ... | <pn> -> <en>) <e> 
+
+se empieza evaluando e y se busca la primera regla cuyo patron encaje con el valor de e, y cuando encaja
+se evalúa la expresión a su derecha.
+
+los patrones tienen que tener una forma que sean compatibles con los valores del tipo de la expresion e, y las expresiones <e1> ... <en> pueden tener cualquier valor siempre y cuando sean todas iguales
+
+Ejemplo:
+let rec compare_lengths = function
+   [] -> (function [] -> 0
+                  | _ -> -1)
+   | h ::t -> (function [] -> 1
+                       | h2::t2 -> compare_lengths t t2);;
+
+let rec compare_lengths l1 l2 =
+   match l1, l2 with
+      [], [] ->0
+    | [], _ -> -1
+    | _, [] -> 1
+    | h1::t1, h2::t2 -> compare_lengths t1 t2;;
+
+
+let rec append l1 l2 = match l1 with
+    [] -> l2
+  | h::t -> h::append t l2;;
+
+let rec rev_append l1 l2 = match l1 with
+    [] -> l2
+  | h::t -> rev_append t (h::l2);;
+
+let rev l = rev_append l [];;
+
+let append' l1 l2 = rev_append (rev l1) l2;;
+
+
+EXCEPCIONES------------------------------------------------------------
+
+Cuando se produce un error de ejecucion en ocaml este va acompañado de un valor de tipo excepcion (exn)
+La funcion raise, seguida por un tipo de excepción, produce esa excepción.
+
+let hd = function
+   [] -> raise (Failure "hd")
+  | h::_ ->h;;
+
+let rec lmax = function
+   [] ->raise (Failure "lmax")
+ | h:: [] -> h
+ | h::t -> max h (lmax t);;
+
+let lmax' = function
+    [] -> raise (Failure "lmax")
+  | h::t ->let rec loop m = function
+                   [] -> m
+                 | h::t -> loop (max m h) t
+           in loop h t;;
+
+
+let rec lmax'' = function
+    [] -> raise (Failure "lmax")
+  | h::[] -> h
+  | h1::h2::t -> lmax (max h1 h2::t);;
+
+
+
+FOLD LEFT ------------------------------------------------------------
+
+Funcion de 3 argumentos (funcion, numero, lista) que la recorre
+Hace la operacion del numero con el primero de la lista, con el resultado se opera de nuevo con el siguiente, etc.
+
+let sumlist l = List.fold_left (+) 0 l;;
+let length l = List.fold_left (fun n _ -> n+1) 0 l;;
+let last (h::t) = List.fold_left (fun _ x -> x) h t;; 
+
+(*funciones anidadas con una regla por function se puede abreviar:
+function n -> function _ ->n+1
+fun n _ -> n+1 *)
+
+ORDENACION --------------------------------------------------------
+
+let rec sorted = function
+    [] | _::[] -> true
+  | h1::h2::t -> h1 <= h2 && sorted (h2::t);;
+
+let rec g_sorted ord = function
+    [] | _::[] -> true
+  | h1::h2::t -> ord h1 h2 && sorted ord (h2::t);;
+
+ - Por insercion
+let rec insert x = fucntion
+    [] -> [x]
+  | h::t -> if x <=h then x::h::t   (*juremos todos que la lista está ordenada. el muerdago también? no, el muerdago no hace falta*)
+            else h::insert x t;;
+
+(*insert recursivo terminal?*)
+
+let rec isort = function 
+    [] -> []
+  | h::t -> insert h (isort t);;
+
+(*isort recursivo terminal?*)
+
+
+
+ - Por fusion
+let rec divide = function
+   [] -> [],[]
+ | h::[] -> [h],[]
+ | h1::h2::t -> let t1, t2 = divide t
+                in h1::t1, h2::t2;;
+
+let rec merge =function
+    h1::t1, h2::t2 -> if h1<=h2 then h1 :: merge (t1,h2::t2)
+                      else h2:: merge (h1::t1, t2)
+  | [], l | l, [] ->l;;
+
+rec msort = function
+  [] -> []
+ | l -> let l1, l2 = divide l in
+        merge (msort l1, msort l2);;
+
+OPTION -------------------------------------------------------------
+
+Si existe un tipo de dato llamado t, existe un t option. 
+None: 'a option
+Some: a : alpha option
+Se utilliza en funciones en las que la aplicación de algunos elementos no llevan a nada pero no queremos que se interrumpa la ejecución. El precio es que no va a returnear un elemento del tipo 'a, sino de tipo option 'a.
+
+Ejemplo:
+let print_first_pos l =
+  match List.find_opt ((<) 0) l with
+       None ->print:endline "Ningún positivo"
+    |  Some  n -> print_endline (string_of_int n);;
+
+
+PROBLEMA DE LAS OCHO REINAS ----------------------------------------
+let come (i1,j1)(i2,j2) = 
+    i1=i2|| j1=j2 || abs(i1-i2) = abs (j1-j2);;
+
+let compatible p l = 
+    not (List.exists (come p) l);;
+
+let queens n = 
+    let rec completa path i j = 
+        if i>n then Some path
+        else if j>n then None
+        else if compatible (i,j) path
+             then match completa ((i,j) :: path) (i+1) 1 with
+                      None -> completa path i (j+1)
+                    | Some p - Some p
+             else completa path i (j+1)
+    in completa [] 1 1;;
+
+let queens n =
+     let rec completar path i j =
+         if i>n then path
+         else if j >n then raise Not_found
+         else if compatible (i,j) path
+                 then try completar ((i,j) :: path) (i+1) 1 with
+                          Not_found -> completar path i (j+1)
+                 else completar path i (j+1)
+     in completar [] 1 1;;
+
+TRY WITH ------------------------------------------------------------
+try <e> with
+    <p1> -> <e1>
+    .
+    .
+    <pn> -> <en>
+
+
+Ejemplo:
+let find_opt p l =
+    try Some(List.find p l) with
+        Not_found -> None;;
+
+let nth_opt l n =
+    try Some  (List.nth l n) with
+        Failure _ -> None       //ta bien no depender del string del failure por si cambia o algo
+
+DEFINICIONES DE TIPOS DE DATOS ---------------------------------------
+
+reunir en un tipo varios distintos, unión disjunta (suma de tipos)
+pueden no tener argumentos, hay constructores constantes que aportan un valor al tipo, pueden ser parametrizadas.
+
+Ejemplos:
+
+type numero = I of int | F of float  //un valor de tipo numero tiene o un I de un int o un F de un float
+
+
+let rec first_int = function
+    [] ->raise Not_found
+  | I n :: _ ->n
+  | _ :: t ->first_int t;;
+
+type 'a option = None | Some of 'a;;
+
+type nat = One | Succ of nat;; //todos los numeros naturales 1, Succ 1, Succ (succ 1), ...
+
+let nat_of_int = function
+   1 -> One
+  | n -> Succ (nat_of_int (n-1));;
+
+type entero = Pos of nat | Neg of nat | Zero;;
+
+let absoluto = function
+     Neg n -> Pos n
+   | e -> e;;
+
+let entero_ of_int = function
+    0 -> Zero
+  | n -> if n>0 then Pos (nat_of_int n)
+         else Neg(nat_of_int n);;
+
+type intplus = Int of int | Na;; //para hacer cosas de errores y asin
+
+let div i1 i2 = match (i1, i2) with
+    (_, Int 0) -> Na
+  | (Int m, Int n) -> Int (m/n)
+  | _ -> Na;;
+
+let div i1 i2 = match (i1, i2) with
+    (Int m, Int n) -> (try Int (m/n) with
+                          Division_by_zero ->Na)
+   | _ ->Na;;
+
+type boolean = True | False;; // tipo enumerado, en el que solo pones constructores fijos
+
+let not = function
+   True -> False
+ | False -> True;;
+
+
+type 'a lista = Vacia | Cons of 'a * 'a lista;; //constructor fijo, parametrizada, recursiva
+
+//Arbol binario
+type 'a bintree = 
+    Empty
+  | Node of 'a * 'a bintree * 'a bintree;;
+
+Ejemplo de valor: Node (5, Node  (4, Empty, Empty), Empty);;
+
+let rec nnodos= function
+   Empty -> 0
+ | Node (_, i, d) -> 1 + nnodos i + nnodos d;;
+
+let rec altura = function
+   Empty -> 0
+ | Node (_, i, d) -> 1 + max (altura i) (altura d);;
+
+let rec tmax = function   //devuelve el nodo mas grande
+   Empty -> invalid_arg "tmax"
+ | Node (r, Empty, Empty) -> r 
+ | Node (r, rama, Empty) | Node (r, Empty, rama) -> max t (tmax rama)
+ | Node (r,i,d) -> max r (max  (tmax i) (tmax d));;
+
+let rec preorden = function
+   Empty -> []
+ | Node (r,i,d) -> r:: preorden i @ preorden d;;
+
+let rec hojas = function
+   Empty -> []
+ | Node (r, Empty, Empty) -> [r]
+ | Node (_,i,d) -> hojas i @ hojas d;;
+
+//Otro tipo, sin el Empty
+types 'a st_bintree  =
+    Node of 'a * 'a st_bintree * 'a st_bintree
+  | Lead of 'a;;
+
+
+let rec leaves = function
+   Leaf v -> [v]
+ | Node (_,i,d) -> leaves i @ leaves d;;
+
+
+type 'a ne_bintree =//representa los mismos valores que el primer bintree pero no tiene el árbol vacío
+   Node of 'a * 'a ne_bintree option * 'a ne_bintree option;; 
+
+//Arboles generales
+
+type 'a tree =
+    T of 'a * 'a tree list;;
+
+Ejemplo de valor: 
+let leaf v = T (v, []);;
+let t_6 = T (6, [leaf5;leaf 11]);;
+let t_7 = T (7, leaf 2; leaf 10; t_6);;
+.
+.
+.
+
+let rec nnodos (T (r, lr)) =
+     List.fold.left (+) 1 (List.rev_map nnodos lr);;
+
+let rec nnodos = function
+    T (_, []) -> 1
+  | T (r,h::t) -> nnodos h + nnodos (T(r,t));;
+
+
+PROGRAMACION IMPERATIVA ----------------------------------------------------------------------------------
+
+let rec par n =
+   n = 0 || impar (n-1)
+and impar n =
+   n <> 0 && par (n-1);;
+
+Generalización de las definiciones (múltiple) - puede no tener el mismo efecto que si se ponen todos los lets seguidos (la segunda definicion si depende de la primera será primero modificada la primera)
+let <p> = <e>
+and <p2> = <p2>
+.
+.
+.
+and <pn> = <en>
+
+Variables -> alpha ref (cajas cuyo valor puede cambiar dentro del mismo tipo)
+Función ref ->
+!n -> valor de n
+:=  -> cambia el valor de la variable
+
+
+let n = ref 0;; crear una variable de tipo int inicializada a 0 y la estamos llamando n
+
+let next () = 
+    let _ = n := !n +1 in
+    !n;;
+
+let next() =  (una forma abreviada de hacer lo mismo)
+    n := !n+1;
+   !n;;
+
+let next, setto = let n = ref 0 in
+    (function () -> n:= !n +1; !n),
+    (function v -> n:= v)
+
+---
+<b> : bool
+
+while <b> do <e> done) : unit
+
+let fact n =
+    let i = ref 2 in
+    let f = ref 1 in
+    while !i <= n do
+          f := !f * !i
+          i:= 1 + !i;
+    done;
+    !f;;
+
+---
+<i1> <i2> : int 
+
+for <i> = <i1> to <i2> do <e> done 
+
+i es un nombre, la condicion se evalúa una sola vez, en la que se determina el numero de veces que se va a hacer
+lo siguiente:
+let <i> = 2 in <l>;
+let <i> = 3 in <l>;
+let <i> = 4 in <l>;
+
+let fact n =
+    let f = ref 1 in
+    for i = 2 to n do
+        f := !f * i
+    done;
+    !f;;
+
+
+---
+let v= [|1; 2; 3|];; - Array, se puede acceder al valor de cualquier elemento en tiempo constante, los elementos estan siempre indexados de 0 a n-1, no hay constructores por tanto no podríamos definirlo
+
+v.(1)  -  valor en la posicion 1  == Array.get v 1;;
+
+v.(2) <- v.(2) + v.(1);; - cambiar el valor de la posicion 2== Array.set v 2 8
+
+Array.make 100 'a';; - crea un array de 100 'a'
+
+REGISTROS------------------------------------------------------
+
+type person = {name : string;age : int};;
+representar valor ->  {name = "Pepe"; age = 49}
+let p1 =  {name = "Pepe"; age = 49}
+acceder a valores -> p1.age;;
+
+//older : person ->person
+
+let older p = 
+     {age = p.age +1; name = p.name}   //no modificas la age, tan solo muestras una persona con esa age y el nombre de la p1
+
+let older p = 
+     {p with age = p.age+1}    
+
+
+type person = {name : string;mutable age : int};;//ahora el valor age puede cambiar
+let aged p = p.age <- p.age +1;; //unit(), va a ir sumandole 1, modificando la age de la person
+
+
+type 'a var = {mutable value: 'a};;
+
+let initvar x = {value = x};;
+
+let (!!) v = v.value;;
+
+let (<<) v x = v.value <- x;;
+
+
+MLI/ML/MODULOS-----------------------------------------------------
+
+escribes la interfaz en mli, implementacion en el ml, los compilas juntos y el cmo puede ser loadeado como modulo con el load "loquesea.cmo" 
+
+otra forma
+module Nombre: sig 
+(interfaz)
+end = struct
+(implementacion)
+end
+
+si pones Nombre() el modulo se convierte en functor (en este caso,si no le das ningun argumento hace de modulo 
+ejemplo
+module Nombre2 = Nombre() -> ahora tienes un modulo
+module Nombre3 = Nombre() -> ahora tienes otro modulo igual
+
+Esto sirve para cuando por ejemplo necesitas varios contadores, en vez de crear varios modulos iguales, haces esto.
+
+Hacer lo mismo con registros?
+
+type counter = {next : unit ->int;
+                reset : unit -> unit};;
+
+let counter = 
+    let n = ref 0 in
+   {next = (fun () -> n := !n +1; !n);
+    reset  = (fun () -> n := 0)};;
+
+let new_counter () =
+    let n = ref 0 in
+    {next = (fun() -> n := !n+1; !n);
+     reset = (fun () -> n := 0)};;
+
+OBJETOS--------------------------------------------------------------------------------------------
+
+let doble c = 2* c#next
+
+let counter = object    //entre object y end se describe el objeto, cada vez qeu se evalúa se crea un objeto nuevo
+    val mutable n= 0
+    method next = n <- n+1; n
+    method reset = n <- 0
+end;;
+
+let doble o = 2 * o#next;;
+
+let counter2 = object
+    val mutable m= 0
+    method next = m <- m+2; m
+end;;
+
+let doble_o o = object
+   val mutable m = o#next
+   method next = m <- m-1; m
+end;;
+
+
+
+let new_counter()  object
+    val mutable n = 0
+    method next = n <- n+1 ; n
+    method reset = n<-0
+end;;
+
+let c2= new_counter ();;//cuando hago esto estoy creando un objeto nuevo
+let c3 = new_counter();;
+
+
+- Clases
+
+class counter = object
+    val mutable m= 0
+    method next = m <- m+2; m
+    method reset = m<-0
+end;;
+
+new nombre_clase - crea una instancia un objeto de los descritos por la clase nombre_clase, receta para crear objetos y un alias para los tipos de objetos que voy a usar de esa clase
+
+let cc1 = new counter;;
+type counter' = <next : int; reset : unit >;;
+
+class counter_with_set = object
+      inherit counter
+      method set x = n <- x
+end;;
+
+
+class counter_with_init ini = object (self) // las clases pueden tener argumentos (ini), alias para propio objeto (self)
+    inherit counter_with_set
+    method reset = (*n <- ini*) //estado al valor que se pone como argumento
+             self#set ini
+    initializer (*n <- 0*) self#reset   //para conseguir para que antes del primer uso del objeto no se ponga en 0 (estado que heredó) se ponga el que queramos
+
+
+class counter_with_step = object (self)
+     inherit counter_with_init
+     val mutable step = 1
+     method next = n <- n + step ; n
+     method set_step s = step <- s
+     method reset =  super#reset; self#step  //redefinir metodo reset para poder cambiar los dos, acceder a los metodos de la propia clase y a los que han heredado que han quedado ocultos
+end;;
+
+
+class counter_with_max = object (self)
+
+
+class virtual counter = object    //abstracta (?)
+     val mutable n=0
+     method next = n <- n+1;n
+     method virtual reset : unit
+end;;
+
+class ['a] stack = object    //clase con parametro de tipo, polimorfica
+     val mutable l = ([] : 'a list) //si no no hay ninguna indicación de a qué se refiere el a'
+     method push x =
+         l <- x :: l
+     method pop = math l with
+         [] -> raise EmptyStack
+       | h::t -> l <- t; h
+     method peek = match l with
+         [] -> raise EmptyStack
+       | h ::_ -> h
+end;;
+
+
+
+
+
+
+
+
+
+
+Mientras quieras pensar como una maquina no puedes ser un buen humano. - Molinelli
